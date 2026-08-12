@@ -1,10 +1,10 @@
 import axios from 'axios';
-import { env } from '../config/env';
 import { AppError } from '../utils/AppError';
 import { buildCacheKey, getCached, setCached } from './cache.service';
-import { CitySuggestion, OpenWeatherGeocodingResult } from '../types/geocoding.types';
+import { CitySuggestion, PhotonResponse } from '../types/geocoding.types';
 
-const GEOCODING_URL = 'https://api.openweathermap.org/geo/1.0/direct';
+const GEOCODING_URL = 'https://photon.komoot.io/api/';
+const RAW_RESULT_LIMIT = 10;
 const SUGGESTION_LIMIT = 5;
 const REQUEST_TIMEOUT_MS = 5000;
 
@@ -24,23 +24,53 @@ export async function searchCities(query: string): Promise<CitySuggestion[]> {
 
 async function fetchCitySuggestions(query: string): Promise<CitySuggestion[]> {
   try {
-    const response = await axios.get<OpenWeatherGeocodingResult[]>(GEOCODING_URL, {
+    const response = await axios.get<PhotonResponse>(GEOCODING_URL, {
       params: {
         q: query,
-        limit: SUGGESTION_LIMIT,
-        appid: env.openWeatherApiKey,
+        limit: RAW_RESULT_LIMIT,
+        lang: 'en',
+      },
+      headers: {
+        'User-Agent': 'weather-dashboard-app',
       },
       timeout: REQUEST_TIMEOUT_MS,
     });
 
-    return response.data.map((result) => ({
-      name: result.name,
-      state: result.state,
-      country: result.country,
-      lat: result.lat,
-      lon: result.lon,
-    }));
+    return normalizeSuggestions(response.data.features);
   } catch {
     throw new AppError(502, 'Unable to reach the geocoding service. Please try again later.');
   }
+}
+
+function normalizeSuggestions(features: PhotonResponse['features']): CitySuggestion[] {
+  const suggestions: CitySuggestion[] = [];
+  const seen = new Set<string>();
+
+  for (const feature of features) {
+    const { properties, geometry } = feature;
+
+    if (properties.osm_key !== 'place' || !properties.name || !properties.countrycode) {
+      continue;
+    }
+
+    const dedupeKey = `${properties.name}|${properties.state ?? ''}|${properties.countrycode}`;
+    if (seen.has(dedupeKey)) {
+      continue;
+    }
+    seen.add(dedupeKey);
+
+    suggestions.push({
+      name: properties.name,
+      state: properties.state,
+      country: properties.countrycode,
+      lat: geometry.coordinates[1],
+      lon: geometry.coordinates[0],
+    });
+
+    if (suggestions.length === SUGGESTION_LIMIT) {
+      break;
+    }
+  }
+
+  return suggestions;
 }

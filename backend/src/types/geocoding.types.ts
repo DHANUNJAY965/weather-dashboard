@@ -1,9 +1,18 @@
-export interface OpenWeatherGeocodingResult {
-  name: string;
-  lat: number;
-  lon: number;
-  country: string;
-  state?: string;
+export interface PhotonFeature {
+  properties: {
+    osm_key: string;
+    name?: string;
+    country?: string;
+    countrycode?: string;
+    state?: string;
+  };
+  geometry: {
+    coordinates: [number, number]; // [lon, lat]
+  };
+}
+
+export interface PhotonResponse {
+  features: PhotonFeature[];
 }
 
 export interface CitySuggestion {
