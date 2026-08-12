@@ -3,10 +3,13 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { env, isProduction } from './config/env';
-import apiRoutes from './routes';
+import apiV1Routes from './routes';
+import healthRoutes from './routes/health.routes';
 import { apiRateLimiter } from './middlewares/rateLimiter.middleware';
 import { notFound } from './middlewares/notFound.middleware';
 import { errorHandler } from './middlewares/errorHandler.middleware';
+
+const API_V1_PREFIX = '/api/v1';
 
 export function createApp(): Application {
   const app = express();
@@ -22,13 +25,16 @@ export function createApp(): Application {
       message: 'Weather Dashboard API is running.',
       endpoints: {
         health: '/api/health',
-        weather: '/api/weather?city=London',
-        cities: '/api/cities?q=Lon',
+        weather: `${API_V1_PREFIX}/weather?city=London`,
+        cities: `${API_V1_PREFIX}/cities?q=Lon`,
       },
     });
   });
 
-  app.use('/api', apiRateLimiter, apiRoutes);
+  // Infra/monitoring endpoint — intentionally unversioned and outside the rate limiter.
+  app.use('/api', healthRoutes);
+
+  app.use(API_V1_PREFIX, apiRateLimiter, apiV1Routes);
 
   app.use(notFound);
   app.use(errorHandler);
