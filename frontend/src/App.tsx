@@ -18,17 +18,25 @@ function App() {
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        searchByCoordinates(position.coords.latitude, position.coords.longitude, {
-          silent: true,
-        });
-      },
-      () => {
-        // Permission denied or unavailable — stay on the idle prompt, no error shown.
-      },
-      { timeout: 8000 },
-    );
+    function requestLocation(isRetry: boolean) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          searchByCoordinates(position.coords.latitude, position.coords.longitude, {
+            silent: true,
+          });
+        },
+        (error) => {
+          const isRecoverable =
+            error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE;
+          if (isRecoverable && !isRetry) {
+            requestLocation(true);
+          }
+        },
+        { timeout: 15000, maximumAge: 300000 },
+      );
+    }
+
+    requestLocation(false);
   }, [searchByCoordinates]);
 
   return (
