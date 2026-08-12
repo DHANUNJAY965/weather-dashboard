@@ -16,6 +16,18 @@ export function createApp(): Application {
   app.use(express.json());
   app.use(morgan(isProduction ? 'combined' : 'dev'));
 
+  app.get('/', (_req, res) => {
+    res.status(200).json({
+      status: 'ok',
+      message: 'Weather Dashboard API is running.',
+      endpoints: {
+        health: '/api/health',
+        weather: '/api/weather?city=London',
+        cities: '/api/cities?q=Lon',
+      },
+    });
+  });
+
   app.use('/api', apiRateLimiter, apiRoutes);
 
   app.use(notFound);
