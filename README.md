@@ -2,6 +2,11 @@
 
 Search current weather by city. The frontend never talks to OpenWeather directly — it calls this repo's own backend, which holds the OpenWeather API key and proxies/normalizes/caches the upstream response.
 
+**Live:**
+
+- App: https://weather-dashboard-styldod.vercel.app
+- API: https://weather-dashboard-styldod-api.vercel.app
+
 ```
 Styldod/
   backend/    Express + TypeScript API (proxies OpenWeather, caches, validates)
