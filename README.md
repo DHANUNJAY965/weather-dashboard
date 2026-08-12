@@ -13,6 +13,17 @@ Styldod/
   frontend/   Vite + React + TypeScript + Tailwind UI
 ```
 
+## Features
+
+- Search weather by city name
+- Displays city, temperature, weather condition, humidity, wind speed, and the weather icon
+- City autocomplete — suggests matching cities as you type (debounced, keyboard navigable), backed by OpenWeather's geocoding API
+- Auto-detects your location on load and shows weather for where you are by default, no search needed
+- Background photo shifts warm/cool based on the current temperature
+- Loading and error states for every request
+- Backend-side response caching and rate limiting to avoid hammering the OpenWeather API
+- OpenWeather API key lives only on the backend — the frontend never talks to OpenWeather directly
+
 ## Setup
 
 ```bash
